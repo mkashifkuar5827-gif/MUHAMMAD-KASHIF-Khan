@@ -1,0 +1,66 @@
+name: Build KASHIF MOBILE AND REPAIR APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 36
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools"
+          sdkmanager "platforms;android-36"
+          sdkmanager "build-tools;36.0.0"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.1'
+
+      - name: Create Debug Keystore
+        run: |
+          keytool -genkeypair             -v             -keystore "$GITHUB_WORKSPACE/debug.keystore"             -storepass android             -keypass android             -alias androiddebugkey             -keyalg RSA             -keysize 2048             -validity 10000             -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Build Debug APK
+        run: |
+          gradle --no-daemon --stacktrace assembleDebug             -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/debug.keystore"             -Pandroid.injected.signing.store.password=android             -Pandroid.injected.signing.key.alias=androiddebugkey             -Pandroid.injected.signing.key.password=android
+
+      - name: Prepare APK
+        run: |
+          mkdir -p release-apk
+          APK=$(find app/build/outputs/apk/debug -type f -name "*.apk" | head -n 1)
+          if [ -z "$APK" ]; then
+            echo "ERROR: APK was not generated!"
+            exit 1
+          fi
+          cp "$APK" "release-apk/KASHIF-MOBILE-AND-REPAIR.apk"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: KASHIF-MOBILE-AND-REPAIR
+          path: release-apk/KASHIF-MOBILE-AND-REPAIR.apk
+          if-no-files-found: error
