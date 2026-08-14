@@ -35,6 +35,14 @@ jobs:
           sdkmanager "platforms;android-36"
           sdkmanager "build-tools;36.0.0"
 
+      - name: Fix KSP version for Kotlin 2.2.10
+        run: |
+          echo "Before:"
+          grep -n "googleDevtoolsKsp" gradle/libs.versions.toml
+          sed -i 's/googleDevtoolsKsp = "2.3.5"/googleDevtoolsKsp = "2.2.10-2.0.2"/' gradle/libs.versions.toml
+          echo "After:"
+          grep -n "googleDevtoolsKsp" gradle/libs.versions.toml
+
       - name: Setup Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -46,7 +54,7 @@ jobs:
 
       - name: Build Debug APK
         run: |
-          gradle --no-daemon --stacktrace assembleDebug             -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/debug.keystore"             -Pandroid.injected.signing.store.password=android             -Pandroid.injected.signing.key.alias=androiddebugkey             -Pandroid.injected.signing.key.password=android
+          gradle --no-daemon --no-build-cache --stacktrace assembleDebug             -Dorg.gradle.configuration-cache=false             -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/debug.keystore"             -Pandroid.injected.signing.store.password=android             -Pandroid.injected.signing.key.alias=androiddebugkey             -Pandroid.injected.signing.key.password=android
 
       - name: Prepare APK
         run: |
