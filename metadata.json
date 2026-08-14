@@ -1,0 +1,6 @@
+{
+  "name": "KASHIF MOBILE AND REPAIR",
+  "description": "Professional Offline Android Mobile Shop Management App with inventory, repairs, POS sales, customer balance, barcode scanner, rates, reports, and multi-language support (English, Urdu, Arabic).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
