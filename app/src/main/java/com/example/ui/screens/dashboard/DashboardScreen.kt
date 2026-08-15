@@ -600,7 +600,7 @@ fun DashboardScreen(
     if (showLanguageDialog) {
         LanguageSelectionDialog(
             currentLanguage = currentLang,
-            onLanguageSelected = { lang ->
+            onSelectLanguage = { lang ->
                 viewModel.setLanguage(lang)
                 showLanguageDialog = false
             },
