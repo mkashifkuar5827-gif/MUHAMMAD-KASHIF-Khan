@@ -1,75 +1,41 @@
-name: Build KASHIF MOBILE AND REPAIR APK
+name: Build Android APK
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
-
-permissions:
-  contents: read
+    branches: [ "main", "master" ]
+  workflow_dispatch:
 
 jobs:
   build:
-    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout project
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Java 17
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
           java-version: '17'
-          cache: gradle
+          distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
-      - name: Install Android SDK
+      # Duplicate resources/icons cleanup step (Just in case)
+      - name: Auto Clean Duplicate Resources
         run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools"
-          sdkmanager "platforms;android-36"
-          sdkmanager "build-tools;36.0.0"
+          find app/src/main/res/ -type f \( -name "ic_launcher*.webp" -o -name "ic_launcher*.png" \) -delete || true
 
-      - name: Fix KSP version for Kotlin 2.2.10
-        run: |
-          echo "Before:"
-          grep -n "googleDevtoolsKsp" gradle/libs.versions.toml
-          sed -i 's/googleDevtoolsKsp = "2.3.5"/googleDevtoolsKsp = "2.2.10-2.0.2"/' gradle/libs.versions.toml
-          echo "After:"
-          grep -n "googleDevtoolsKsp" gradle/libs.versions.toml
-
-      - name: Setup Gradle 9.3.1
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '9.3.1'
-
-      - name: Create Debug Keystore
-        run: |
-          keytool -genkeypair             -v             -keystore "$GITHUB_WORKSPACE/debug.keystore"             -storepass android             -keypass android             -alias androiddebugkey             -keyalg RSA             -keysize 2048             -validity 10000             -dname "CN=Android Debug,O=Android,C=US"
-
+      # Executable permission and direct Gradle build
       - name: Build Debug APK
         run: |
-          gradle --no-daemon --no-build-cache --stacktrace assembleDebug             -Dorg.gradle.configuration-cache=false             -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/debug.keystore"             -Pandroid.injected.signing.store.password=android             -Pandroid.injected.signing.key.alias=androiddebugkey             -Pandroid.injected.signing.key.password=android
+          chmod +x gradlew || true
+          ./gradlew assembleDebug --no-daemon
 
-      - name: Prepare APK
-        run: |
-          mkdir -p release-apk
-          APK=$(find app/build/outputs/apk/debug -type f -name "*.apk" | head -n 1)
-          if [ -z "$APK" ]; then
-            echo "ERROR: APK was not generated!"
-            exit 1
-          fi
-          cp "$APK" "release-apk/KASHIF-MOBILE-AND-REPAIR.apk"
-          ls -lh release-apk/
-
-      - name: Upload APK
+      # Generates and uploads the final APK
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: KASHIF-MOBILE-AND-REPAIR
-          path: release-apk/KASHIF-MOBILE-AND-REPAIR.apk
-          if-no-files-found: error
+          name: Kashif-Mobile-Repair-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
