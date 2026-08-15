@@ -22,15 +22,13 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      # Missing Keystore & Google Services auto-generation
+      # Correct Package Name setup for Google Services
       - name: Setup Build Dependencies
         run: |
           keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           cp debug.keystore app/debug.keystore || true
           
-          if [ ! -f app/google-services.json ]; then
-            echo '{"project_info":{"project_number":"123456789","project_id":"dummy-app"},"client":[{"client_info":{"mobilesdk_app_id":"1:123456789:android:123456789","android_client_info":{"package_name":"com.kashif.mobilerepair"}},"api_key":[{"current_key":"dummy_key"}]}]}' > app/google-services.json
-          fi
+          echo '{"project_info":{"project_number":"123456789","project_id":"dummy-app"},"client":[{"client_info":{"mobilesdk_app_id":"1:123456789:android:123456789","android_client_info":{"package_name":"com.aistudio.kashifmobile.shop"}},"api_key":[{"current_key":"dummy_key"}]}]}' > app/google-services.json
 
       # Build Debug APK
       - name: Build Debug APK
@@ -41,4 +39,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Kashif-Mobile-Repair-APK
-          path: "**/build/outputs/apk/debug/*.apk"
+          path: app/build/outputs/apk/debug/app-debug.apk
