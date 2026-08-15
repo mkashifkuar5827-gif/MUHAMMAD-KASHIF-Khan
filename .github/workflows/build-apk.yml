@@ -22,18 +22,16 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      # Duplicate resources/icons cleanup step (Just in case)
+      # Duplicate resources cleanup
       - name: Auto Clean Duplicate Resources
         run: |
           find app/src/main/res/ -type f \( -name "ic_launcher*.webp" -o -name "ic_launcher*.png" \) -delete || true
 
-      # Executable permission and direct Gradle build
+      # Direct Gradle Build (Gradlew file ki zarurat nahi pare gi)
       - name: Build Debug APK
-        run: |
-          chmod +x gradlew || true
-          ./gradlew assembleDebug --no-daemon
+        run: gradle assembleDebug
 
-      # Generates and uploads the final APK
+      # Upload final APK
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
