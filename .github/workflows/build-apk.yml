@@ -19,35 +19,26 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # Gradle 8.5 Version Pinning
       - name: Setup Gradle 8.5
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.5'
 
-      # Keystore, Google Services & Compatibility Fix
-      - name: Setup Dependencies & Fix Compatibility
+      - name: Prepare Build Environment
         run: |
-          # Generate debug keystore
+          # Debug keystore setup
           keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           cp debug.keystore app/debug.keystore || true
-          
-          # Generate google-services.json
+
+          # Google Services JSON setup
           echo '{"project_info":{"project_number":"123456789","project_id":"dummy-app"},"client":[{"client_info":{"mobilesdk_app_id":"1:123456789:android:123456789","android_client_info":{"package_name":"com.aistudio.kashifmobile.shop"}},"api_key":[{"current_key":"dummy_key"}]}]}' > app/google-services.json
 
-          # Suppress Kotlin & Compose compatibility mismatch
+          # Kotlin compatibility bypass
           echo "android.suppressKotlinVersionCompatibilityCheck=true" >> gradle.properties
 
-          # Generate Gradle 8.5 Wrapper
-          gradle wrapper --gradle-version 8.5
-
-      # Build Debug APK
       - name: Build Debug APK
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+        run: gradle assembleDebug --no-daemon
 
-      # Upload Finished APK
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
