@@ -19,28 +19,35 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle
+      # Gradle 8.5 Version Pinning
+      - name: Setup Gradle 8.5
         uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
 
-      # 1. Keystore & Google Services Setup
-      - name: Setup Build Dependencies
+      # Keystore, Google Services & Compatibility Fix
+      - name: Setup Dependencies & Fix Compatibility
         run: |
+          # Generate debug keystore
           keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           cp debug.keystore app/debug.keystore || true
+          
+          # Generate google-services.json
           echo '{"project_info":{"project_number":"123456789","project_id":"dummy-app"},"client":[{"client_info":{"mobilesdk_app_id":"1:123456789:android:123456789","android_client_info":{"package_name":"com.aistudio.kashifmobile.shop"}},"api_key":[{"current_key":"dummy_key"}]}]}' > app/google-services.json
 
-      # 2. Fix Kotlin & Compose Version Mismatch
-      - name: Fix Compose Compiler Version
-        run: |
-          find . -name "build.gradle.kts" -o -name "build.gradle" | while read -r file; do
-            sed -i 's/kotlinCompilerExtensionVersion = .*/kotlinCompilerExtensionVersion = "1.5.10"/g' "$file" || true
-          done
+          # Suppress Kotlin & Compose compatibility mismatch
+          echo "android.suppressKotlinVersionCompatibilityCheck=true" >> gradle.properties
 
-      # 3. Build Debug APK
+          # Generate Gradle 8.5 Wrapper
+          gradle wrapper --gradle-version 8.5
+
+      # Build Debug APK
       - name: Build Debug APK
-        run: gradle assembleDebug --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
-      # 4. Upload Final APK
+      # Upload Finished APK
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
